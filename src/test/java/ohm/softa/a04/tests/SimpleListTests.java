@@ -8,8 +8,10 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.function.Function;
+import java.util.stream.StreamSupport;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Kurfer
@@ -18,11 +20,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class SimpleListTests {
 
 	private final Logger logger = LogManager.getLogger();
-	private SimpleList testList;
+	private SimpleList<Integer> testList;
 
 	@BeforeEach
 	void setup(){
-		testList = new SimpleListImpl();
+		testList = new SimpleListImpl<>();
 
 		testList.add(1);
 		testList.add(2);
@@ -35,7 +37,7 @@ public class SimpleListTests {
 	void testAddElements(){
 		logger.info("Testing if adding and iterating elements is implemented correctly");
 		int counter = 0;
-		for(Object o : testList){
+		for(Integer o : testList){
 			counter++;
 		}
 		assertEquals(5, counter);
@@ -50,16 +52,15 @@ public class SimpleListTests {
 	@Test
 	void testFilterAnonymousClass(){
 		logger.info("Testing the filter possibilities by filtering for all elements greater 2");
-		SimpleList result = testList.filter(new SimpleFilter() {
+		SimpleList<Integer> result = testList.filter(new SimpleFilter<Integer>() {
 			@Override
-			public boolean include(Object item) {
-				int current = (int)item;
+			public boolean include(Integer item) {
+				int current = item;
 				return current > 2;
 			}
 		});
 
-		for(Object o : result){
-			int i = (int)o;
+		for(int i : result){
 			assertTrue(i > 2);
 		}
 	}
@@ -67,10 +68,31 @@ public class SimpleListTests {
 	@Test
 	void testFilterLambda(){
 		logger.info("Testing the filter possibilities by filtering for all elements which are dividable by 2");
-		SimpleList result = testList.filter(o -> ((int) o) % 2 == 0);
-		for(Object o : result){
-			int i = (int)o;
-			assertTrue(i % 2 == 0);
+		SimpleList<Integer> result = testList.filter(i -> ((i) % 2 == 0));
+		for(int i : result){
+			assertEquals(0, i % 2);
 		}
+	}
+
+	@Test
+	void testMap(){
+		SimpleList<Integer> intList = new SimpleListImpl<>();
+		intList.add(1);
+		intList.add(2);
+		intList.add(3);
+
+		SimpleList<String> stringList = new SimpleListImpl<>();
+		stringList.add("1");
+		stringList.add("2");
+		stringList.add("3");
+
+		Function<Integer, String> f = Object::toString;
+
+		SimpleList<String> result = intList.map(f);
+
+		String[] resultsArray = StreamSupport.stream(result.spliterator(), false).toArray(String[]::new);
+		String[] stringsArray = StreamSupport.stream(stringList.spliterator(), false).toArray(String[]::new);
+
+		assertArrayEquals(stringsArray, resultsArray);
 	}
 }
